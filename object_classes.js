@@ -6,6 +6,9 @@
 /**
  * Bullet Class
  */
+BULLET_default_fill = "black";
+BULLET_default_lineColor = "black";
+BULLET_default_lineWidth = 1;
 function Bullet(sender, props){
     this.points = 1;
     this.parent = sender;
@@ -16,6 +19,11 @@ function Bullet(sender, props){
     this.velocity = new Vector2d();
     this.rotation = 0;
     this.radius = 5;
+    this.ctxProperties = {
+        fillColor: BULLET_default_fill,
+        lineColor: BULLET_default_lineColor,
+        lineWidth: BULLET_default_lineWidth
+    };
     
     for (p in props){
         this[p] = props[p];
@@ -36,11 +44,16 @@ function Bullet(sender, props){
      * Draws the game object on a given context
      */
     this.draw = function(){
-        ctx.beginPath();
-        ctx.arc(this.position.x, this.position.y, this.radius, 0,Math.PI*2);
-        ctx.closePath();
-        ctx.fill();
-        
+        ctx.save();
+            ctx.beginPath();
+            ctx.fillStyle = this.ctxProperties.fillColor;
+            ctx.lineWidth = this.ctxProperties.lineWidth;
+            ctx.strokeStyle = this.ctxProperties.lineColor;
+            ctx.arc(this.position.x, this.position.y, this.radius, 0,Math.PI*2);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+        ctx.restore();
     }
 }
 
@@ -48,11 +61,19 @@ function Bullet(sender, props){
  * Ship Class
  */
 function Ship(props){
+    this.canFireBomb = false;
     this.score = 0.1;
-    this.health = 100;
+    
+    this.healthBar = new ProgressBar();
+    this.healthBar.position = new Vector2d(canvas.width/2 - 125, -canvas.height/2 + 5);
+    this.healthBar.dimensions = new Vector2d( 115, 20);
+    this.healthBar.value = this.healthBar.max;
+    
     this.invincible = false;
+    
     this.bullets = [];
     this.enemies = [];
+    
     this.position = new Vector2d();
     this.velocity = new Vector2d();
     this.dimensions = new Vector2d(10,10);
@@ -83,7 +104,7 @@ function Ship(props){
     }
     
     /*
-     * Draws the game object on a given context
+     * Draws the ship
      */
     this.draw = function(){
         ctx.save();
@@ -93,7 +114,7 @@ function Ship(props){
             ctx.beginPath();
             ctx.arc(0,0,36, 0,Math.PI*2);
             ctx.closePath();
-            //ctx.
+            ctx.strokeRect(10,-5,10,10);
         ctx.stroke();
         
         ctx.restore();
@@ -142,10 +163,18 @@ function Ship(props){
 /**
  * Enemy Class
  */
+ENEMY_default_fill = "white";
+ENEMY_default_lineColor = "black";
+ENEMY_default_lineWidth = 1;
 function Enemy(sender){
     this.parent = sender || ship;
     this.bullets = [];
     this.dimensions = new Vector2d(10,10);
+    this.ctxProperties = {
+        fill: ENEMY_default_fill,
+        strokeStyle: ENEMY_default_lineColor,
+        strokeWidth: ENEMY_default_lineWidth
+    };
     
     this.getNewPosition = function(){
         var newp = new Vector2d();
@@ -184,7 +213,7 @@ function Enemy(sender){
         //check if colliding with parent circle
         if (this.position.distanceFrom(this.parent.position) <= 36 + this.dimensions.x/2){
             this.parent.enemies.removeElement(this);
-            this.parent.health--;
+            this.parent.healthBar.value--;
         }
         
         // check if colliding with a bullet
@@ -205,11 +234,11 @@ function Enemy(sender){
      */
     this.draw = function(){
         ctx.save();
-        ctx.translate(this.position.x, this.position.y);
-        ctx.rotate(this.rotation);
-        ctx.strokeRect(-this.dimensions.x/2, -this.dimensions.y/2, this.dimensions.x, this.dimensions.y);
-        ctx.fillStyle = "white";
-        ctx.fillRect(-this.dimensions.x/2, -this.dimensions.y/2, this.dimensions.x, this.dimensions.y);
+            ctx.translate(this.position.x, this.position.y);
+            ctx.rotate(this.rotation);
+            ctx.strokeRect(-this.dimensions.x/2, -this.dimensions.y/2, this.dimensions.x, this.dimensions.y);
+            ctx.fillStyle = "white";
+            ctx.fillRect(-this.dimensions.x/2, -this.dimensions.y/2, this.dimensions.x, this.dimensions.y);
         ctx.restore();
     }
     
@@ -223,4 +252,47 @@ function Enemy(sender){
         }));
     }
     /* */
+}
+
+/**
+ * ProgressBar Class
+ */
+PROGRESSBAR_default_bgColor = "red";
+PROGRESSBAR_default_barColor = "green";
+PROGRESSBAR_default_lineWidth = 1;
+PROGRESSBAR_default_lineColor = "black";
+function ProgressBar(props){
+    this.max = 100;
+    this.value = 0;
+    this.position = new Vector2d();
+    this.dimensions = new Vector2d();
+    this.ctxProperties = {
+        bgColor: PROGRESSBAR_default_bgColor,
+        barColor: PROGRESSBAR_default_barColor,
+        lineWidth: PROGRESSBAR_default_lineWidth,
+        lineColor: PROGRESSBAR_default_lineColor
+    };
+    
+    if (props){
+        for (var p in props){
+            this[p] = this.ctxProperties[p];
+        }
+    }
+    
+    this.draw = function(){
+        ctx.save();
+            // background
+            ctx.fillStyle = this.ctxProperties.bgColor;
+            ctx.fillRect(this.position.x, this.position.y, this.dimensions.x, this.dimensions.y);
+            
+            // bar
+            ctx.fillStyle = this.ctxProperties.barColor;
+            ctx.fillRect(this.position.x, this.position.y, this.dimensions.x*(this.value/this.max), this.dimensions.y);
+            
+            // outline
+            ctx.strokeStyle = this.ctxProperties.lineColor;
+            ctx.lineWidth = this.ctxProperties.lineWidth;
+            ctx.strokeRect(this.position.x, this.position.y, this.dimensions.x, this.dimensions.y);
+        ctx.restore();
+    }
 }

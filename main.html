@@ -5,6 +5,12 @@
     <style>
         canvas {
             border: solid;
+            text-align: center;
+            margin:50px 0px;
+            padding:0px;
+        }
+        div {
+            float: left;
         }
     </style>
     <title>Page Title</title>
@@ -31,10 +37,11 @@
  * * * automatic-fire
  * * * chain reaction - one bullet kill spawns two more bullets at kill site
  * * * Bomb
- * * Health Bar
+ * 
+ * Health Bar
  *
  * Bomb
- * * wait for it to load
+ * * wait for it to load - most votes
  * * earn it
  * * click on ship
  *
@@ -60,15 +67,11 @@ grd.addColorStop(1, '#AAAAAA');
 var ship = new Ship({
     dimensions: new Vector2d(40,60)
 });
+
 //ship.dimensions = new Vector2d(40,60);
 canvas.onclick = function(){
     if (GAMELOOP.isRunning()) ship.fire();
 }
-
-document.addEventListener("visibilitychange", function(){
-    console.log("changed");
-    pauseGame();
-});
 
 var fps = 40;
 
@@ -119,7 +122,7 @@ function tick(){
         // show score
         ctx.strokeRect(-canvas.width/2, -canvas.height/2, 120, 30);
         ctx.fillStyle = "rgba(255,255,255,.6)";
-        ctx.fillRect(-canvas.width/2, -canvas.height/2, 120, 30);
+        ctx.fillRect(- canvas.width/2, -canvas.height/2, 120, 30);
         ctx.fillStyle = "black";
         ctx.font = "15pt bold";
         ctx.fillText("Score: "+Math.floor(ship.score), -canvas.width/2 + 10, -canvas.height/2 + 20)
@@ -130,9 +133,8 @@ function tick(){
         ctx.fillRect(canvas.width/2 - 200, -canvas.height/2, 200, 30);
         ctx.fillStyle = "black";
         ctx.fillText("Health:", canvas.width/2 - 190, -canvas.height/2 + 21)
-        ctx.strokeRect(canvas.width/2 - 125, -canvas.height/2 + 5, 115, 20)
-        ctx.fillStyle = "red";
-        if (ship.health) ctx.fillRect(canvas.width/2 - 124.5, -canvas.height/2 + 5.5, 115*(ship.health/100)-1, 19)
+        
+        ship.healthBar.draw();
         
         // show instructions
         ctx.strokeRect(-canvas.width/2 + 120, -canvas.height/2, canvas.width/2 - 200 + canvas.width/2 - 120, 30);
@@ -147,28 +149,15 @@ function tick(){
         
     ctx.restore();
 
-    // if score <=0 or health = 0
-    if (ship.score==0 || ship.health==0){
+    // if dead
+    if (ship.healthBar.value<=0){
         GAMELOOP.clearInterval();
         interval_NEWSHIP.clearInterval();
         GAMEOVER = true;
     }
 }
 
-/* *
-document.onkeypress = function (e){
-    var code = KeyBinding.getKeyCode(e);
-    //document.title = code;
-    if (KeyBinding.keyCodeMap[code] == ' '){
-        for (var i=0; i<Math.PI*2; i+=.1){
-            ship.bullets.push( new Bullet(ship, {
-                position: ship.position,
-                velocity: new Vector2d().vector_from_angle(i).scale(2)
-            }));
-        }
-    }
-}
-/* */
+
 KeyBinding.bind_key(' ', {
     onkeypress: function(){
         if (GAMELOOP.isRunning()) ship.fireBomb();
@@ -221,5 +210,68 @@ function pauseGame(startScreen){
 </script>
 
 </body>
+
+<div>
+    <center>
+        <b><u>BULLETS</u></b>
+        <table border=1>
+            <tbody>
+                <tr>
+                    <td>
+                        Fill Color:
+                    </td>
+                    <td>
+                        <input type="text" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Line Color:
+                    </td>
+                    <td>
+                        <input type="text" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Line Width:
+                    </td>
+                    <td>
+                        <input type="text" />
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <b><u>ENEMIES</u></b><br/><table border=1>
+            <tbody>
+                <tr>
+                    <td>
+                        Fill Color:
+                    </td>
+                    <td>
+                        <input type="text" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Line Color:
+                    </td>
+                    <td>
+                        <input type="text" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Line Width:
+                    </td>
+                    <td>
+                        <input type="text" />
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </center>
+</div>
 
 </html>

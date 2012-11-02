@@ -33,9 +33,9 @@ var KeyBinding = {
 		'y': 121, 'z': 122, '{': 123, '|': 124, '~': 126, "enter":13, 
 	},
 };
-KeyBinding.bind_key = function(k, func){
+KeyBinding.bind_key = function(k, functions){
 	// make so you can add on other functions
-	KeyBinding.keyFuncMap[KeyBinding.KeyToCodeMap[k]] = [false, func]
+	KeyBinding.keyFuncMap[KeyBinding.KeyToCodeMap[k]] = [false, functions];
 }
 /* */
 document.onkeydown = function(e){

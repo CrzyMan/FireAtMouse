@@ -17,10 +17,14 @@ Mouse_tracker.init = function(_canvas){
 	if (document.body!=undefined){
 	    var c = document.createElement('center');
 	    c.appendChild(_canvas);
+	    /* */
 	    document.body.appendChild(c);
+	    /* *
+	    document.body.appendChild(_canvas);
+	    /* */
 	}
 	_canvas.height = 480;
-	_canvas.width = 640;
+	_canvas.width = 740;
     }
     
     _canvas.onmousemove = Mouse_tracker.set_mouse_pos;
