@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <style>
+        canvas {
+            border: solid;
+        }
+    </style>
+    <title>Page Title</title>
+    <script src="vectors.js"></script>
+    <script src="mouse_tracker.js"></script>
+    <script src="object_classes.js"></script>
+    <script src="arrays+.js"></script>
+    <script src="key_binding.js"></script>
+</head>
+
+<body>
+
+<script>
+/**
+ * when mouse is further from ship, bullet's kill = lower points
+ *
+ * Color scheme, e.g. Invert for night play
+ *
+ * Pause Option/screen
+ *
+ * Ship
+ * * power ups
+ * * * automatic-fire
+ * * * chain reaction - one bullet kill spawns two more bullets at kill site
+ * * * Bomb
+ * * Health Bar
+ *
+ * Bomb
+ * * wait for it to load
+ * * earn it
+ * * click on ship
+ *
+ * Bullet
+ * * speed proportionate to health
+ *
+ * Enemy
+ * * Health
+ * * Fire Back
+ */
+
+// makes canvas element if not existing
+Mouse_tracker.init();
+
+
+var ctx = canvas.getContext('2d');
+ctx.translate(canvas.width/2, canvas.height/2);
+var grd = ctx.createRadialGradient(canvas.width/2, canvas.height/2, 10,canvas.width/2 + 5, canvas.height/2 + 5, 300);
+grd.addColorStop(0, '#FFFFFF');
+grd.addColorStop(1, '#CCCCCC');
+
+var ship = new Ship();
+ship.dimensions = new Vector2d(40,60);
+canvas.onclick = ship.fire;
+
+var fps = 40;
+
+setInterval(tick, 1000/fps);
+
+function tick(){
+    ctx.save();
+        ctx.setTransform(1,0,0,1,0,0);
+        ctx.fillStyle = grd;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        //ctx.clearRect(0,0,canvas.width, canvas.height);
+    ctx.restore();
+    
+    ship.update();
+    
+    ship.draw();
+}
+
+document.onkeypress = function (e){
+    var code = KeyBinding.getKeyCode(e);
+    //document.title = code;
+    if (KeyBinding.keyCodeMap[code] == ' '){
+        for (var i=0; i<Math.PI*2; i+=.1){
+            ship.bullets.push( new Bullet(ship, {
+                position: ship.position,
+                velocity: new Vector2d().vector_from_angle(i).scale(2)
+            }));
+        }
+    }
+}
+
+setInterval(ship.newEnemy, 750);
+
+</script>
+
+</body>
+</html>
