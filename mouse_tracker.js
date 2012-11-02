@@ -24,7 +24,7 @@ Mouse_tracker.init = function(_canvas){
 	    /* */
 	}
 	_canvas.height = 480;
-	_canvas.width = 740;
+	_canvas.width = 640;
     }
     
     _canvas.onmousemove = Mouse_tracker.set_mouse_pos;

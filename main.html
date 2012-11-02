@@ -6,11 +6,14 @@
         canvas {
             border: solid;
             text-align: center;
-            margin:50px 0px;
-            padding:0px;
+            display: block;
         }
-        div {
-            float: left;
+        #optionBox{
+            background-color: #FFFFFF;
+            display: none;
+            position: absolute;
+            padding: 20px;
+            border: solid;
         }
     </style>
     <title>Page Title</title>
@@ -23,6 +26,104 @@
 </head>
 
 <body>
+    
+    <div id="optionBox">
+        <center>
+            <center><b><u>BULLETS</u></b></center>
+            <table border=1>
+                <tbody>
+                    <tr>
+                        <td>
+                            Fill Color:
+                        </td>
+                        <td>
+                            <input type="text" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Line Color:
+                        </td>
+                        <td>
+                            <input type="text" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Line Width:
+                        </td>
+                        <td>
+                            <input type="text" />
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <br/>
+            <center><b><u>ENEMIES</u></b><br/></center>
+            <table border=1>
+                <tbody>
+                    <tr>
+                        <td>
+                            Fill Color:
+                        </td>
+                        <td>
+                            <input type="text" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Line Color:
+                        </td>
+                        <td>
+                            <input type="text" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Line Width:
+                        </td>
+                        <td>
+                            <input type="text" />
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <br/>
+            <center><b><u>Health Bar</u></b><br/></center>
+            <table border=1>
+                <tbody>
+                    <tr>
+                        <td>
+                            Bar Color:
+                        </td>
+                        <td>
+                            <input type="text" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Background Color:
+                        </td>
+                        <td>
+                            <input type="text" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Line Width:
+                        </td>
+                        <td>
+                            <input type="text" />
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <center><br/>
+                <button onclick="">Cancel</button> <button onclick="">Apply</button>
+            </center>
+        </center>
+    </div>
+
 
 <script>
 /**
@@ -55,8 +156,12 @@
 
 // makes canvas element if not existing
 Mouse_tracker.init();
+canvas.style.top = (window.innerHeight/2 - canvas.height/2) + "px";
+canvas.style.left = (window.innerWidth/2 - canvas.width/2) + "px";
 
 var GAMEOVER = false;
+
+var optionBox = document.getElementById('optionBox');
 
 var ctx = canvas.getContext('2d');
 ctx.translate(canvas.width/2, canvas.height/2);
@@ -175,6 +280,14 @@ KeyBinding.bind_key('p', {
     onkeypress: pauseGame
 });
 
+KeyBinding.bind_key('o', {
+    onkeypress: function(){
+        if (!GAMELOOP.isRunning() && !GAMEOVER){
+            toggleOptionBox();
+        }
+    }
+});
+
 tick();
 pauseGame(true);
 
@@ -204,74 +317,23 @@ function pauseGame(startScreen){
     else{
         GAMELOOP.resume();
         interval_NEWSHIP.resume();
+        if (optionBox.style.display=='block')
+            toggleOptionBox();
     }
 }
 
+function toggleOptionBox(){
+    var optionBox = document.getElementById('optionBox');
+    if (optionBox.style.display == 'block')
+        optionBox.style.display = 'none';
+    else {
+        optionBox.style.display = 'block';
+        optionBox.style.left = (window.innerWidth/2 - optionBox.clientWidth/2) + "px";
+        optionBox.style.top = (window.innerHeight / 2 - optionBox.clientHeight/2) + "px";
+    }
+}
 </script>
 
 </body>
-
-<div>
-    <center>
-        <b><u>BULLETS</u></b>
-        <table border=1>
-            <tbody>
-                <tr>
-                    <td>
-                        Fill Color:
-                    </td>
-                    <td>
-                        <input type="text" />
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        Line Color:
-                    </td>
-                    <td>
-                        <input type="text" />
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        Line Width:
-                    </td>
-                    <td>
-                        <input type="text" />
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-        
-        <b><u>ENEMIES</u></b><br/><table border=1>
-            <tbody>
-                <tr>
-                    <td>
-                        Fill Color:
-                    </td>
-                    <td>
-                        <input type="text" />
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        Line Color:
-                    </td>
-                    <td>
-                        <input type="text" />
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        Line Width:
-                    </td>
-                    <td>
-                        <input type="text" />
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </center>
-</div>
 
 </html>
