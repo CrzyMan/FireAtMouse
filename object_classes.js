@@ -7,6 +7,7 @@
  * Bullet Class
  */
 function Bullet(sender, props){
+    this.points = 1;
     this.parent = sender;
     if (this.parent == undefined)
         throw "No parent given for Bullet";
@@ -46,7 +47,10 @@ function Bullet(sender, props){
 /**
  * Ship Class
  */
-function Ship(){
+function Ship(props){
+    this.score = 0.1;
+    this.health = 100;
+    this.invincible = false;
     this.bullets = [];
     this.enemies = [];
     this.position = new Vector2d();
@@ -54,11 +58,20 @@ function Ship(){
     this.dimensions = new Vector2d(10,10);
     this.rotation = 0;
     
+    if (props){
+        for (var p in props){
+            this[p] = props[p];
+        }
+    }
+    
     /*
      * Updates the game object
      */
     this.update = function(){
         ship.rotation = Mouse_tracker.position.angle();
+        
+        // round off score to the tenth
+        this.score = Math.round(this.score*10)/10;
         
         for (var b=this.bullets.length-1; b>=0; b--){
             this.bullets[b].update();
@@ -74,14 +87,15 @@ function Ship(){
      */
     this.draw = function(){
         ctx.save();
-        //ctx.translate(this.position.x, this.position.y);
-        ctx.rotate(this.rotation);
-        ctx.strokeRect(-this.dimensions.x/2, -this.dimensions.y/2, this.dimensions.x, this.dimensions.y);
-        ctx.beginPath();
-        ctx.arc(0,0,36, 0,Math.PI*2);
-        ctx.closePath();
+            ctx.translate(this.position.x, this.position.y);
+            ctx.rotate(this.rotation);
+            ctx.strokeRect(-this.dimensions.x/2, -this.dimensions.y/2, this.dimensions.x, this.dimensions.y);
+            ctx.beginPath();
+            ctx.arc(0,0,36, 0,Math.PI*2);
+            ctx.closePath();
+            //ctx.
         ctx.stroke();
-        //_ctx.stroke();
+        
         ctx.restore();
         
         for ( var b=0; b<this.bullets.length; b++){
@@ -97,10 +111,24 @@ function Ship(){
      * Fires a bullet
      */
     this.fire = function(){
+        var XOff = 26*Math.cos(ship.rotation);
+        var YOff = 26*Math.sin(ship.rotation);
+        var pos = new Vector2d(ship.position.x + XOff, ship.position.y + YOff);
         ship.bullets.push(new Bullet(ship,{
-            position: ship.position,
+            position: pos,
             velocity: new Vector2d().vector_from_angle(ship.rotation).scale(2)
         }));
+    }
+    
+    this.fireBomb = function(){
+        var offset = Math.random()
+        for (var i=0; i<Math.PI*2; i+=.1){
+            ship.bullets.push( new Bullet(ship, {
+                position: ship.position,
+                velocity: new Vector2d().vector_from_angle(i+offset).scale(2),
+                points: 0.1
+            }));
+        }
     }
     
     /**
@@ -129,23 +157,15 @@ function Enemy(sender){
          * (x-max*(-1)^Math.floor(Math.random()*2))
          * (y-max*(-1)^Math.floor(Math.random()*2))
          */
-        var side = Math.floor(Math.random() * 4);
+        var side = Math.floor(Math.random() * 2);
         switch (side){
             case 0:
-                newp.x = canvas.width/2 + this.dimensions.x/2;
-                newp.y = Math.random()*(canvas.height + this.dimensions.y*2) - canvas.height/2 - this.dimensions.y;
+                newp.x = Math.pow(-1, Math.floor(Math.random() * 2))*(canvas.width/2 + this.dimensions.x/2);
+                newp.y = Math.random()*(canvas.height + this.dimensions.y*2 - canvas.height/2 - this.dimensions.y);
                 break;
             case 1:
-                newp.x = Math.random()*(canvas.width + this.dimensions.x*2) - canvas.width/2 - this.dimensions.x;
-                newp.y = -canvas.height/2 - this.dimensions.y/2;
-                break;
-            case 2:
-                newp.x = -(canvas.width/2 + this.dimensions.x/2);
-                newp.y = -(Math.random()*(canvas.height + this.dimensions.y*2) - canvas.height/2 - this.dimensions.y);
-                break;
-            case 3:
-                newp.x = -(Math.random()*(canvas.width + this.dimensions.x*2) - canvas.width/2 - this.dimensions.x);
-                newp.y = -(-canvas.height/2 - this.dimensions.y/2);
+                newp.x = Math.random()*(canvas.width + this.dimensions.x*2 - canvas.width/2 - this.dimensions.x);
+                newp.y = Math.pow(-1, Math.floor(Math.random() * 2))*(canvas.height/2 + this.dimensions.y/2);
                 break;
         }
         return newp;
@@ -164,13 +184,15 @@ function Enemy(sender){
         //check if colliding with parent circle
         if (this.position.distanceFrom(this.parent.position) <= 36 + this.dimensions.x/2){
             this.parent.enemies.removeElement(this);
-            // TODO: damgage
+            this.parent.health--;
         }
         
         // check if colliding with a bullet
         for (var b=this.parent.bullets.length-1; b>=0; b--){
             // if bullet and enemy colliding
             if (this.position.distanceFrom(this.parent.bullets[b].position) <= this.dimensions.x){
+                if (!this.parent.invincible) this.parent.score += this.parent.bullets[b].points;
+                
                 this.parent.bullets.splice(b,1);
                 this.parent.enemies.removeElement(this);
                 return;

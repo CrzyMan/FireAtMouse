@@ -13,6 +13,7 @@
     <script src="object_classes.js"></script>
     <script src="arrays+.js"></script>
     <script src="key_binding.js"></script>
+    <script src="pauseableTimeEvents.js"></script>
 </head>
 
 <body>
@@ -48,34 +49,113 @@
 // makes canvas element if not existing
 Mouse_tracker.init();
 
+var GAMEOVER = false;
 
 var ctx = canvas.getContext('2d');
 ctx.translate(canvas.width/2, canvas.height/2);
 var grd = ctx.createRadialGradient(canvas.width/2, canvas.height/2, 10,canvas.width/2 + 5, canvas.height/2 + 5, 300);
 grd.addColorStop(0, '#FFFFFF');
-grd.addColorStop(1, '#CCCCCC');
+grd.addColorStop(1, '#AAAAAA');
 
-var ship = new Ship();
-ship.dimensions = new Vector2d(40,60);
-canvas.onclick = ship.fire;
+var ship = new Ship({
+    dimensions: new Vector2d(40,60)
+});
+//ship.dimensions = new Vector2d(40,60);
+canvas.onclick = function(){
+    if (GAMELOOP.isRunning()) ship.fire();
+}
+
+document.addEventListener("visibilitychange", function(){
+    console.log("changed");
+    pauseGame();
+});
 
 var fps = 40;
 
-setInterval(tick, 1000/fps);
+var GAMELOOP = new PauseableInterval(tick, 1000/fps);
+
+var interval_NEWSHIP = new PauseableInterval(ship.newEnemy, 750);
+
+var DEBUG = false;
+var DEBUG_last_time = new Date().getTime();
+var DEBUG_tick = 0;
+var DEBUG_last_fps = 0;
 
 function tick(){
+    
+    // pause game if not onscreen
+    if (document.webkitHidden){
+        pauseGame();
+        return;
+    }
+    
+    // show debug menu
+    var FPS_str = "";
+    if (DEBUG){
+        var new_time = new Date().getTime();
+        //document.title = Math.floor(1000/(new_time - last_time));
+        DEBUG_tick = DEBUG_tick==0? 1:0;
+        
+        if (DEBUG_tick) FPS_str = "  :  "+Math.floor(1000/(new_time - DEBUG_last_time));
+        else FPS_str = "  :  "+DEBUG_last_fps;
+        DEBUG_last_fps = Math.floor(1000/(new_time - DEBUG_last_time));
+        
+        DEBUG_last_time = new_time;
+    }
+    
+    // set gradient on screen
     ctx.save();
         ctx.setTransform(1,0,0,1,0,0);
         ctx.fillStyle = grd;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        //ctx.clearRect(0,0,canvas.width, canvas.height);
     ctx.restore();
     
     ship.update();
     
     ship.draw();
+    
+    // draw score and health bar and instructions
+    ctx.save();
+        // show score
+        ctx.strokeRect(-canvas.width/2, -canvas.height/2, 120, 30);
+        ctx.fillStyle = "rgba(255,255,255,.6)";
+        ctx.fillRect(-canvas.width/2, -canvas.height/2, 120, 30);
+        ctx.fillStyle = "black";
+        ctx.font = "15pt bold";
+        ctx.fillText("Score: "+Math.floor(ship.score), -canvas.width/2 + 10, -canvas.height/2 + 20)
+        
+        // show health
+        ctx.strokeRect(canvas.width/2 - 200, -canvas.height/2, 200, 30);
+        ctx.fillStyle = "rgba(255,255,255,.6)";
+        ctx.fillRect(canvas.width/2 - 200, -canvas.height/2, 200, 30);
+        ctx.fillStyle = "black";
+        ctx.fillText("Health:", canvas.width/2 - 190, -canvas.height/2 + 21)
+        ctx.strokeRect(canvas.width/2 - 125, -canvas.height/2 + 5, 115, 20)
+        ctx.fillStyle = "red";
+        if (ship.health) ctx.fillRect(canvas.width/2 - 124.5, -canvas.height/2 + 5.5, 115*(ship.health/100)-1, 19)
+        
+        // show instructions
+        ctx.strokeRect(-canvas.width/2 + 120, -canvas.height/2, canvas.width/2 - 200 + canvas.width/2 - 120, 30);
+        ctx.fillStyle = "rgba(255,255,255,.6)";
+        ctx.fillRect(-canvas.width/2 + 120, -canvas.height/2, canvas.width/2 - 200 + canvas.width/2 - 120, 30);
+        ctx.fillStyle = "black";
+        ctx.font = "9pt Arial";
+        ctx.fillText("Mouse/Curser  :  Aim, Click to fire", -canvas.width/2 + 125, -canvas.height/2 + 12);
+        ctx.fillText("Spacebar  :  Bomb (Don't go crazy)", -canvas.width/2 + 125, -canvas.height/2 + 26);
+        ctx.fillText("p  :  toggle pause", 22, -canvas.height/2 + 12);
+        ctx.fillText("shft+  :  fps"+FPS_str, 22, -canvas.height/2 + 26);
+        
+    ctx.restore();
+
+    // if score <=0 or health = 0
+    if (ship.score==0 || ship.health==0){
+        GAMELOOP.clearInterval();
+        interval_NEWSHIP.clearInterval();
+        GAMEOVER = true;
+    }
 }
 
+/* *
 document.onkeypress = function (e){
     var code = KeyBinding.getKeyCode(e);
     //document.title = code;
@@ -88,10 +168,58 @@ document.onkeypress = function (e){
         }
     }
 }
+/* */
+KeyBinding.bind_key(' ', {
+    onkeypress: function(){
+        if (GAMELOOP.isRunning()) ship.fireBomb();
+    }
+});
 
-setInterval(ship.newEnemy, 750);
+KeyBinding.bind_key('+', {
+    onkeypress: function(){
+        DEBUG = !DEBUG;
+        document.title = "Page Title";
+    }
+});
+
+KeyBinding.bind_key('p', {
+    onkeypress: pauseGame
+});
+
+tick();
+pauseGame(true);
+
+// make pause with message, "Paused" as default
+function pauseGame(startScreen){
+    var msg = startScreen? "Press p" : "Paused";
+    if (GAMEOVER) return;
+    
+    if (GAMELOOP.isRunning()){
+        GAMELOOP.pause();
+        interval_NEWSHIP.pause();
+        
+        // show pause screen
+        ctx.save();
+            ctx.fillStyle = "rgba(0,0,0,.5)";
+            ctx.fillRect(-canvas.width/2, -canvas.height/2, canvas.width, canvas.height);
+            ctx.fillStyle = "white";
+            ctx.strokeStyle="black";
+            ctx.font = "40pt bold underlined Arial";
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = "lightgrey";
+            ctx.fillText(msg,-75,10);
+            ctx.lineWidth = 1.5;
+            ctx.strokeText(msg,-75,10);
+        ctx.restore();
+    }
+    else{
+        GAMELOOP.resume();
+        interval_NEWSHIP.resume();
+    }
+}
 
 </script>
 
 </body>
+
 </html>
